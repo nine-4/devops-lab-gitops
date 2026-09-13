@@ -1,0 +1,16 @@
+# Kubernetes credentials
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# Local environment files
+.env
+.env.*
+
+# Private keys and certificates
+*.key
+*.pem
+
+# IDE
+.idea/
+.vscode/
