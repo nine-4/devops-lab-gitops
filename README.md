@@ -156,6 +156,8 @@ kubectl kustomize clusters/prod
 
 Validate the desired state against the Kubernetes API without persisting resources:
 
+These server-side dry-run commands were used during Milestone 7 to verify the namespace manifests. The namespaces were intentionally not created manually because future deployment ownership belongs to Argo CD.
+
 ```bash
 kubectl \
   --context devops-nonprod \
@@ -171,6 +173,22 @@ kubectl \
   --dry-run=server \
   -k clusters/prod
 ```
+
+## Relevant Project Milestone
+
+Milestone 7 GitOps foundation completed:
+
+```text
+Separate GitOps repository established
+DEV namespace declared for devops-nonprod
+UAT namespace declared for devops-nonprod
+PROD namespace declared for devops-prod
+Kustomize entry points created
+Desired state validated with Kubernetes server-side dry-run
+Namespaces intentionally not applied manually
+```
+
+The namespace manifests remain desired state in Git until Argo CD is introduced as the reconciliation layer.
 
 ## Current Status
 
