@@ -39,11 +39,18 @@ devops-prod
 
 DEV and UAT share the non-production cluster while PROD runs in a separate cluster to provide a stronger isolation boundary.
 
-The management cluster will later host Argo CD and other platform tooling.
+The management cluster hosts Argo CD and is reserved for management and platform tooling.
 
 ## Repository Structure
 
 ```text
+argocd/
+├── root-app.yaml
+└── applications/
+    ├── kustomization.yaml
+    ├── devops-nonprod.yaml
+    └── devops-prod.yaml
+
 clusters/
 ├── nonprod/
 │   ├── kustomization.yaml
@@ -57,7 +64,7 @@ clusters/
         └── prod.yaml
 ```
 
-Kustomize is used to compose the desired Kubernetes resources for each cluster.
+Kustomize is used to compose the desired Kubernetes resources for each cluster and the declarative Argo CD Application definitions.
 
 ## GitOps Model
 
@@ -87,9 +94,55 @@ Kubernetes clusters
 
 Jenkins is responsible for continuous integration.
 
-Argo CD will be responsible for continuous delivery and Kubernetes reconciliation.
+Argo CD is responsible for continuous delivery and Kubernetes reconciliation.
 
 Jenkins should not directly deploy workloads with `kubectl apply`.
+
+## Argo CD Application Management
+
+Argo CD runs in the `devops-mgmt` cluster and manages the two workload clusters:
+
+```text
+devops-mgmt
+└── Argo CD
+    ├── devops-nonprod
+    │   ├── DEV
+    │   └── UAT
+    │
+    └── devops-prod
+        └── PROD
+```
+
+The Argo CD Applications are themselves declared in Git.
+
+```text
+argocd/root-app.yaml
+        |
+        v
+devops-platform-apps
+        |
+        v
+argocd/applications/
+├── devops-nonprod.yaml
+└── devops-prod.yaml
+        |
+        +--> clusters/nonprod
+        |
+        └--> clusters/prod
+```
+
+`devops-platform-apps` is the bootstrap root Application. After it is created in the management cluster, it reconciles the child Application definitions stored in this repository.
+
+The child Applications refer to workload clusters by their logical Argo CD registration names:
+
+```text
+devops-nonprod
+devops-prod
+```
+
+Runtime cluster credentials, bearer tokens, certificate authority data, and Floci-specific API endpoints are not stored in this repository. They remain in Argo CD cluster credential Secrets inside the management cluster.
+
+Synchronization currently remains manual so reconciliation behavior can be inspected explicitly while the platform is being built.
 
 ## Artifact Promotion
 
@@ -199,19 +252,27 @@ Implemented:
 * UAT namespace definition
 * PROD namespace definition
 * Kustomize entry points for non-production and production
+* Argo CD installed in the management cluster
+* Non-production and production workload clusters registered with Argo CD
+* GitOps repository connected to Argo CD
+* `devops-nonprod` Application
+* `devops-prod` Application
+* Git-managed DEV, UAT, and PROD namespaces
+* Manual synchronization workflow
+* Drift detection and reconciliation verification
+* Declarative child Application definitions
+* Root Application definition for Application bootstrapping
 
 Planned:
 
-* Argo CD installation in the management cluster
-* Registration of workload clusters with Argo CD
-* Argo CD Applications
 * Spring Boot Deployment and Service manifests
-* Environment-specific configuration
+* Environment-specific application configuration
 * Health probes
 * Resource requests and limits
 * Network policies
 * Immutable image promotion
 * Jenkins-driven GitOps updates
+* Automated synchronization policy where appropriate
 
 ## Security
 
