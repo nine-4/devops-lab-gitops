@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devops-prod
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/nine-4/devops-lab-gitops.git
+    targetRevision: main
+    path: clusters/prod
+
+  destination:
+    name: devops-prod
+    namespace: default
